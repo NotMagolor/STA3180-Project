@@ -7,5 +7,8 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-print("hello world")
+```
+
+```{r}
+random <- 1; random
 ```
