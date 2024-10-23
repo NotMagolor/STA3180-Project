@@ -9,6 +9,64 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Inlcuding Continents in Dataset:
 ```{r}
-random <- 1; random
+data <- read_csv("/Users/emilymojtabaee/Downloads/group_3_data.csv")
+continents <- read_csv("/Users/emilymojtabaee/Downloads/Countries by continents.csv")
+continents <- continents %>% rename(reference_area = Country)
+data <- merge(data, continents, by = "reference_area")
 ```
+Statistics by continent (mean, median, sd, max, min):
+```{r}
+datacont <- data[,-1] %>% group_by(Continent)
+variables <- c("education", "employment", "absence_of_legal_discrimination", "access_to_productive_and_financial_assets", "reproductive_discrim", "restricted_civil_liberties", "discrimination_in_the_family")
+statstable_bycont <- datacont %>% group_by(Continent) %>% 
+  summarise(across(all_of(variables), list(mean = mean,
+                                           median = median,
+                                           sd = sd,
+                                           max = max,
+                                           min = min)))
+statstable_bycont <- data.frame(statstable_bycont)
+statstable_bycont
+```
+Statistics overall (mean, median, sd, max, min):
+```{r}
+statstable <- data.frame(Mean = sapply(data[variables], mean),
+                         Median = sapply(data[variables], median),
+                         `Standard Deviation` = sapply(data[variables], sd),
+                         Maximum = sapply(data[variables], max),
+                         Minimum = sapply(data[variables], min))
+statstable
+```
+Means of just education and employment by country:
+```{r}
+minitable <- datacont %>% group_by(Continent) %>% summarize(`Mean Education` = mean(education),`Mean Employment` = mean(employment))
+minitable
+```
+
+Correlation Matrix:
+```{r}
+cormatrix <- as.data.frame(cor(data[,variables]))
+cormatrix
+````
+Seperate Boxplots:
+```{r}
+ggplot(data, aes(x = Continent, y = education)) + geom_boxplot() + labs(title = "Women's Education by Continent", y = "Education")
+ggplot(data, aes(x = Continent, y = employment)) + geom_boxplot() + labs(title = "Women's Employment by Continent", y = "Employment")
+```
+Combined Boxplots:
+```{r}
+ggplot(data) +
+  geom_boxplot(aes(x = Continent, y = education, fill = "education")) +
+  geom_boxplot(aes(x = Continent, y = employment, fill = "employment")) +
+  labs(title = "Boxplots of Education and Employment", y = "Education and Employment", x = "Continent")
+```
+General Education vs Employment Plot:
+```{r}
+ggplot(data, aes(x = education, y = employment)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Employment")
+```
+Education vs Employment Plot by Country:
+```{r}
+ggplot(data, aes(x = education, y = employment, color = Continent)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Employment by Country")
+```
+
