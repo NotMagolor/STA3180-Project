@@ -4,7 +4,7 @@ author: "Add Names"
 date: "2024-10-15"
 output: pdf_document
 ---
-
+# Setup
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
@@ -19,6 +19,7 @@ continents <- read_csv("/Users/emilymojtabaee/Downloads/Countries by continents.
 continents <- continents %>% rename(reference_area = Country)
 data <- merge(data, continents, by = "reference_area")
 ```
+# General Stats
 Statistics by continent (mean, median, sd, max, min):
 ```{r}
 datacont <- data[,-1] %>% group_by(Continent)
@@ -61,7 +62,7 @@ VIF values:
 reg_for_vif <- lm(employment ~ education + absence_of_legal_discrimination + access_to_productive_and_financial_assets + reproductive_discrim + restricted_civil_liberties + discrimination_in_the_family, data)
 vif(reg_for_vif)
 ```
-# For Questions 1 and 3
+# Graphs for Questions 1 and 3
 Seperate Boxplots:
 ```{r}
 ggplot(data, aes(x = Continent, y = education)) + geom_boxplot() + labs(title = "Women's Education by Continent", y = "Education")
@@ -83,7 +84,7 @@ Education vs Employment Plot by Continent:
 ggplot(data, aes(x = education, y = employment, color = Continent)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Employment by Country")
 ```
 
-# For Question 2
+# Graphs for Question 2
 Seperate Boxplots:
 ```{r}
 ggplot(data, aes(x = Continent, y = education)) + geom_boxplot() + labs(title = "Women's Education by Continent", y = "Education")
