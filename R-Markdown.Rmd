@@ -40,12 +40,12 @@ statstable <- data.frame(Mean = sapply(data[variables], mean),
                          Minimum = sapply(data[variables], min))
 statstable
 ```
-Means of just education and employment by country (Q1+3):
+Means of just education and employment by continent (Q1+3):
 ```{r}
 minitable <- datacont %>% group_by(Continent) %>% summarize(`Mean Education` = mean(education),`Mean Employment` = mean(employment))
 minitable
 ```
-Means of just education and access to financials by country (Q2):
+Means of just education and access to financials by continent (Q2):
 ```{r}
 minitable2 <- datacont %>% group_by(Continent) %>% summarize(`Mean Education` = mean(education),`Mean Access` = mean(access_to_productive_and_financial_assets))
 minitable2
@@ -72,7 +72,7 @@ General Education vs Employment Plot:
 ```{r}
 ggplot(data, aes(x = education, y = employment)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Employment")
 ```
-Education vs Employment Plot by Country:
+Education vs Employment Plot by Continent:
 ```{r}
 ggplot(data, aes(x = education, y = employment, color = Continent)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Employment by Country")
 ```
@@ -95,7 +95,7 @@ General Education vs Access Plot:
 ```{r}
 ggplot(data, aes(x = education, y = access_to_productive_and_financial_assets)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Access to Productive and Financial Assets")
 ```
-Education vs Access by Country:
+Education vs Access by Continent:
 ```{r}
 ggplot(data, aes(x = education, y = access_to_productive_and_financial_assets, color = Continent)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Access to Productive and Financial Assets")
 ```
