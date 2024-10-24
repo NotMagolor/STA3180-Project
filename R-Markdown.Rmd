@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(readr)
 library(plotly)
+library(car)
 ```
 Inlcuding Continents in Dataset:
 ```{r}
@@ -55,6 +56,11 @@ Correlation Matrix:
 cormatrix <- as.data.frame(cor(data[,variables]))
 cormatrix
 ````
+VIF values:
+```{r}
+reg_for_vif <- lm(employment ~ education + absence_of_legal_discrimination + access_to_productive_and_financial_assets + reproductive_discrim + restricted_civil_liberties + discrimination_in_the_family, data)
+vif(reg_for_vif)
+```
 # For Questions 1 and 3
 Seperate Boxplots:
 ```{r}
