@@ -183,3 +183,24 @@ Education vs Access by Continent:
 ```{r}
 ggplot(data, aes(x = education, y = access_to_productive_and_financial_assets, color = Continent)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Access to Productive and Financial Assets")
 ```
+Looking at significance of education vs access for each continent:
+```{r}
+regAsia1 <- lm(access_to_productive_and_financial_assets ~ education, dataAsia)
+summary(regAsia1)
+regEurope1 <- lm(access_to_productive_and_financial_assets ~ education, dataEurope)
+summary(regEurope1)
+regAfrica1 <- lm(access_to_productive_and_financial_assets ~ education, dataAfrica)
+summary(regAfrica1)
+regNA1 <- lm(access_to_productive_and_financial_assets ~ education, dataNorthAmerica)
+summary(regNA1)
+regOceania1 <- lm(access_to_productive_and_financial_assets ~ education, dataOceania)
+summary(regOceania1)
+regSA1 <- lm(access_to_productive_and_financial_assets ~ education, dataSouthAmerica)
+summary(regSA1)
+```
+Europe: significant (0.05 level), R^2 = 0.1807
+North America: significant (0.5 level), R^2 = 0.6626
+South America: significant (0.1 level), R^2 = 0.4727
+
+not significant: Asia, Africa
+not enough data: Oceania
