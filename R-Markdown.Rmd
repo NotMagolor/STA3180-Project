@@ -132,6 +132,36 @@ Education vs Employment Plot by Continent:
 ```{r}
 ggplot(data, aes(x = education, y = employment, color = Continent)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Employment by Country")
 ```
+Looking at significance of education vs employment for each continent:
+```{r}
+dataAsia <- data %>% filter(Continent == "Asia")
+dataEurope <- data %>% filter(Continent == "Europe")
+dataAfrica <- data %>% filter(Continent == "Africa")
+dataNorthAmerica <- data %>% filter(Continent == "North America")
+dataOceania <- data %>% filter(Continent == "Oceania")
+dataSouthAmerica <- data %>% filter(Continent == "South America")
+```
+```{r}
+regAsia <- lm(employment ~ education, dataAsia)
+summary(regAsia)
+regEurope <- lm(employment ~ education, dataEurope)
+summary(regEurope)
+regAfrica <- lm(employment ~ education, dataAfrica)
+summary(regAfrica)
+regNA <- lm(employment ~ education, dataNorthAmerica)
+summary(regNA)
+regOceania <- lm(employment ~ education, dataOceania)
+summary(regOceania)
+regSA <- lm(employment ~ education, dataSouthAmerica)
+summary(regSA)
+```
+
+Asia: significant (0.1 level), R^2 = 0.3029
+Europe: significant (0.001 level), R^2 = 0.4128
+North America: significant (0.1 level), R^2 = 0.7174
+
+not significant: Africa, South America
+not enough data: Oceania
 
 # Graphs for Question 2
 Seperate Boxplots:
