@@ -1,7 +1,7 @@
 ---
 title: "STA3180 Project"
-author: "Add Names"
-date: "2024-10-15"
+author: "William, Sean, Pari, Emily"
+date: "2024"
 output: html_document
 ---
 # Setup
@@ -11,6 +11,7 @@ library(tidyverse)
 library(readr)
 library(plotly)
 library(car)
+library(MASS)
 ```
 
 Inlcuding Continents in Dataset:
@@ -85,6 +86,7 @@ ggplot(data) +
   labs(title = "Boxplots of Education and Employment", y = "Education and Employment", x = "Continent")
 ```
 
+# Employment Regressions
 ```{r}
 slr_employment_education <- lm(employment ~ education, data = data)
 
@@ -116,9 +118,11 @@ Where DIF = discrimination_in_the_family, RCL = restricted_civil_liberties, and 
 
 $$\hat{Employment} = 13.03642 - 0.37606 * DIF + 0.39578 * RCL + 0.60455 * ALD$$
 
-The multiple regression with this combination of predictor variables results in a statistically significant model with statistically significant parameters. The $R^2_{adj}$ = 0.6379 on account for adding the new predictors. This model explains an additional 31.87% variation in employment compared to the simple linear regression. The simple linear regression only took into account education, but this model focusing on the presence / abscense of liberties and discrimination appears to be a better model of prediction.
+The multiple regression with this combination of predictor variables results in a statistically significant model with statistically significant parameters. The $R^2_{adj}$ = 0.6379 on account for adding the new predictors. This model explains an additional 31.87% variation in employment compared to the simple linear regression. The simple linear regression only took into account education, but this model focusing on the presence / absence of liberties and discrimination appears to be a better model of prediction.
 
 ```{r}
+ggplot(data, aes(x = discrimination_in_the_family + restricted_civil_liberties + absence_of_legal_discrimination, y = employment)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Employment multiple regression")
+
 e <- resid(multiple_employment)
 
 qqnorm(e)
@@ -126,6 +130,8 @@ qqline(e, col = "blue")
 
 plot(fitted(multiple_employment), e)
 abline(h = 0, col = "blue")
+
+boxcox(multiple_employment)
 ```
 
 Education vs Employment Plot by Continent:
