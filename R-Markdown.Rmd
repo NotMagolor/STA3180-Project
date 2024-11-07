@@ -2,7 +2,7 @@
 title: "STA3180 Project"
 author: "Add Names"
 date: "2024-10-15"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -12,13 +12,15 @@ library(readr)
 library(plotly)
 library(car)
 ```
+
 Inlcuding Continents in Dataset:
 ```{r}
-data <- read_csv("/Users/emilymojtabaee/Downloads/group_3_data.csv")
-continents <- read_csv("/Users/emilymojtabaee/Downloads/Countries by continents.csv")
+data <- read.csv("group_3_data.csv")
+continents <- read.csv("Countries by continents.csv")
 continents <- continents %>% rename(reference_area = Country)
 data <- merge(data, continents, by = "reference_area")
 ```
+
 Statistics by continent (mean, median, sd, max, min):
 ```{r}
 datacont <- data[,-1] %>% group_by(Continent)
@@ -32,6 +34,7 @@ statstable_bycont <- datacont %>% group_by(Continent) %>%
 statstable_bycont <- data.frame(statstable_bycont)
 statstable_bycont
 ```
+
 Statistics overall (mean, median, sd, max, min):
 ```{r}
 statstable <- data.frame(Mean = sapply(data[variables], mean),
@@ -41,32 +44,38 @@ statstable <- data.frame(Mean = sapply(data[variables], mean),
                          Minimum = sapply(data[variables], min))
 statstable
 ```
+
 Means of just education and employment by continent (Q1+3):
 ```{r}
 minitable <- datacont %>% group_by(Continent) %>% summarize(`Mean Education` = mean(education),`Mean Employment` = mean(employment))
 minitable
 ```
+
 Means of just education and access to financials by continent (Q2):
 ```{r}
 minitable2 <- datacont %>% group_by(Continent) %>% summarize(`Mean Education` = mean(education),`Mean Access` = mean(access_to_productive_and_financial_assets))
 minitable2
 ```
+
 Correlation Matrix:
 ```{r}
 cormatrix <- as.data.frame(cor(data[,variables]))
 cormatrix
-````
+```
+
 VIF values:
 ```{r}
 reg_for_vif <- lm(employment ~ education + absence_of_legal_discrimination + access_to_productive_and_financial_assets + reproductive_discrim + restricted_civil_liberties + discrimination_in_the_family, data)
 vif(reg_for_vif)
 ```
+
 # For Questions 1 and 3
 Seperate Boxplots:
 ```{r}
 ggplot(data, aes(x = Continent, y = education)) + geom_boxplot() + labs(title = "Women's Education by Continent", y = "Education")
 ggplot(data, aes(x = Continent, y = employment)) + geom_boxplot() + labs(title = "Women's Employment by Continent", y = "Employment")
 ```
+
 Combined Boxplots:
 ```{r}
 ggplot(data) +
@@ -74,10 +83,50 @@ ggplot(data) +
   geom_boxplot(aes(x = Continent, y = employment, fill = "employment")) +
   labs(title = "Boxplots of Education and Employment", y = "Education and Employment", x = "Continent")
 ```
-General Education vs Employment Plot:
+
 ```{r}
+slr_employment_education <- lm(employment ~ education, data = data)
+
 ggplot(data, aes(x = education, y = employment)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Employment")
+
+e <- resid(slr_employment_education)
+
+qqnorm(e)
+qqline(e, col = "blue")
+
+plot(fitted(slr_employment_education), e)
+abline(h = 0, col = "blue")
+
+summary(slr_employment_education)
 ```
+
+The Q-Q plot shows the residuals are normally distributed with some extremes at the tails. There is no visual pattern in the residual plot. Data points for the predictor and response variables are independent. Conditions are valid for creating a linear regression model. The fitted equation for this model is:
+
+$$\hat{Employment} = 31.8551 + 2.9900 * Education$$
+
+The model itself is statistically significant from the p-value of its F-test, 9.456e-07 < $\alpha$ = 0.05; however, $R^2$ shows that only 31.92% of the variation in employment is explained by the linear association with education in the linear regression model. This regression could be improved by adding more predictor parameters in a multiple regression.
+
+```{r}
+multiple_employment <- lm(employment ~  discrimination_in_the_family + restricted_civil_liberties + absence_of_legal_discrimination, data = data)
+summary(multiple_employment)
+```
+
+Where DIF = discrimination_in_the_family, RCL = restricted_civil_liberties, and absence_of_legal_discrimination = ALD:
+
+$$\hat{Employment} = 13.03642 - 0.37606 * DIF + 0.39578 * RCL + 0.60455 * ALD$$
+
+The multiple regression with this combination of predictor variables results in a statistically significant model with statistically significant parameters. The $R^2_{adj}$ = 0.6379 on account for adding the new predictors. This model explains an additional 31.87% variation in employment compared to the simple linear regression. The simple linear regression only took into account education, but this model focusing on the presence / abscense of liberties and discrimination appears to be a better model of prediction.
+
+```{r}
+e <- resid(multiple_employment)
+
+qqnorm(e)
+qqline(e, col = "blue")
+
+plot(fitted(multiple_employment), e)
+abline(h = 0, col = "blue")
+```
+
 Education vs Employment Plot by Continent:
 ```{r}
 ggplot(data, aes(x = education, y = employment, color = Continent)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Employment by Country")
@@ -89,6 +138,7 @@ Seperate Boxplots:
 ggplot(data, aes(x = Continent, y = education)) + geom_boxplot() + labs(title = "Women's Education by Continent", y = "Education")
 ggplot(data, aes(x = Continent, y = access_to_productive_and_financial_assets)) + geom_boxplot() + labs(title = "Women's Access to Productive and Financial Assets by Continent", y = "Access to Productive and Financial Assets")
 ```
+
 Combined Boxplots:
 ```{r}
 boxplot <- ggplot(data) +
@@ -97,10 +147,7 @@ boxplot <- ggplot(data) +
   labs(title = "Boxplots of Education and Access to Productive and Financial Assets", y = "Education and Access to Productive and Financial Assets", x = "Continent")
 ggplotly(boxplot) %>% layout(boxmode = "group")
 ```
-General Education vs Access Plot:
-```{r}
-ggplot(data, aes(x = education, y = access_to_productive_and_financial_assets)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Access to Productive and Financial Assets")
-```
+
 Education vs Access by Continent:
 ```{r}
 ggplot(data, aes(x = education, y = access_to_productive_and_financial_assets, color = Continent)) + geom_point() + geom_smooth(method = "lm", se = FALSE) + labs(title = "Education vs Access to Productive and Financial Assets")
