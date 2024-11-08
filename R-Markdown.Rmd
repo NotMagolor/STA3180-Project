@@ -357,7 +357,7 @@ Table of Original Observations:
 ```{r}
 table(simpdata$Group)
 ```
-This table should the amount of observations in each Continent from the original data.
+This table shows the amount of observations in each Continent from the original data.
 ```{r}
 proportions <- prop.table(table(simpdata$Group))
 proportions
