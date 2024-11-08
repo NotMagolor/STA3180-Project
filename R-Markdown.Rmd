@@ -107,7 +107,7 @@ summary(slr_employment_education)
 
 The Q-Q plot shows the residuals are normally distributed with some extremes at the tails. There is no visual pattern in the residual plot. Data points for the predictor and response variables are independent. Conditions are valid for creating a linear regression model. The fitted equation for this model is:
 
-$$\hat{Employment} = 31.8551 + 2.9900 * Education$$
+$$\widehat{Employment} = 31.8551 + 2.9900 * Education$$
 
 The model itself is statistically significant from the p-value of its F-test, 9.456e-07 < $\alpha$ = 0.05; however, $R^2$ shows that only 31.92% of the variation in employment is explained by the linear association with education in the linear regression model. This regression could be improved by adding more predictor parameters in a multiple regression.
 
@@ -118,7 +118,7 @@ summary(multiple_employment)
 
 Where DIF = discrimination_in_the_family, RCL = restricted_civil_liberties, and absence_of_legal_discrimination = ALD:
 
-$$\hat{Employment} = 13.03642 - 0.37606 * DIF + 0.39578 * RCL + 0.60455 * ALD$$
+$$\widehat{Employment} = 13.03642 - 0.37606 * DIF + 0.39578 * RCL + 0.60455 * ALD$$
 
 The multiple regression with this combination of predictor variables results in a statistically significant model with statistically significant parameters. The $R^2_{adj}$ = 0.6379 on account for adding the new predictors. This model explains an additional 31.87% variation in employment compared to the simple linear regression. The simple linear regression only took into account education, but this model focusing on the presence / absence of liberties and discrimination appears to be a better model of prediction.
 
