@@ -12,6 +12,8 @@ library(readr)
 library(plotly)
 library(car)
 library(MASS)
+library(candisc)
+library(fdm2id)
 ```
 
 Inlcuding Continents in Dataset:
@@ -210,3 +212,162 @@ South America: significant (0.1 level), R^2 = 0.4727
 
 not significant: Asia, Africa
 not enough data: Oceania
+
+# Discriminant Analysis for Question 3
+Fixing the data:
+```{r}
+simpdata1 <- data %>% mutate(Q1 = access_to_productive_and_financial_assets, Q2 = employment, Q3 = access_to_justice, Q4 = discrimination_in_the_family, Q5 = restricted_civil_liberties, Q6 = absence_of_legal_discrimination, Group = Continent)
+simpdata1 <- simpdata1[,26:32]
+simpdata <- simpdata1 %>% filter(Group != "Oceania")
+simpdata$Group <- factor(simpdata$Group)
+```
+new names for simplicity of code:
+Q1: access to productive and financial assets
+Q2: employment
+Q3: access to justice
+Q4: discrimination in the family
+Q5: restricted civil liberties
+Q6: absence of legal discrimination
+
+*Note: Because of the little data available on Oceania, we have decided to remove it from this analysis. Previous regression analysis and observations have shown we only have 2 data points on Oceania, which is not enough nor comparable to the other continents.*
+
+Regression of Group on Response Variables:
+```{r}
+regGroup <- lm(cbind(Q1, Q2, Q3, Q4, Q5, Q6) ~ Group, data=simpdata)
+regGroup
+```
+The regGroup shows the intercept and coefficient of Group on each predictor variable. The intercepts are the reference's group expected value for each predictor variable, and the reference group in this case is Africa. The coefficient on GroupAsia for Q1 is 3.1231, which means that Q1, which is access to productive and financial assets, is expected to increase by 3.1231 for countries in Asia compared to the reference group, which is Africa. Each coefficient on each group can be interpreted in a similar manner. 
+
+Canonical Discriminant Analysis for Group:
+```{r}
+CDAGroup <- candisc(regGroup, data=simpdata)
+CDAGroup
+diff(CDAGroup$eigenvalues)
+```
+- CanRsq shows the squared canonical correlation for each canonical function, which is the proportion of variance that can be explained by the differences in groups. The first CanRsq = 0.6009911 indicates that the first canonical function explains about 60% of the variance. 
+- The Eigenvalue shows the relative importance of each canonical functions, with higher eigenvalues indicating higher importance as the function explains more of the variance. The first eigenvalue of 1.5062095 is the largest, indicating the first canonical function is the most important for separating groups. 
+- Since the differences did not properly appear in the CDA output, they were manually retrieved to ensure they were properly calculated by the CDA. These differences show the differences in consecutive eigenvalues for the canonical functions. The first difference of -1.151288 is the largest difference and is between the first and second eigenvalues. The differences makes it easier to visually compare the eigenvalues.
+- The percent shows the proportion of total discriminating power explained by each canonical function compared to all the functions. The first value of 70% indicates that the first canonical function captures the majority of the variance and has the highest discriminating power, and the second of 16.49% indicates  the second canonical function captures an additional 16.49% of total variance.
+- The Cumulative shows the percentage of variance explained by each function up to that point (it addes "Percent" of each function at that point). We can see 4 of the canonical functions make up 100% of the explained variance, and the first two together explain 86.496% of the variance. 
+- The LR test stat and next few statistics shows whether each canonical function is a significant contributor to the separating of groups. As we can see, the first is significant at the .001 level, the second at the 0.01 level, the third and the 0.1 level, and the last is not significant. 
+- Overall, we can tell that the first two functions are the most important for distinguishing groups. 
+
+Extracting the Wilks Test  (the LR test stat and other statistics):
+```{r}
+w <- Wilks(CDAGroup)
+```
+Creating the Eigenvalue:
+```{r}
+eigenvalue <- data.frame(
+  `Eigenvalue` = CDAGroup$eigenvalues[1:4],
+  `Percent` = CDAGroup$eigenvalues[1:4] / sum(CDAGroup$eigenvalues)*100,
+  `Cum Percent` = cumsum(CDAGroup$eigenvalues[1:4]/sum(CDAGroup$eigenvalues) *100),
+  `Canonical Corr` = sqrt(CDAGroup$canrsq[1:4]),
+  `Liklihood Ratio` = w$`LR test stat`,
+  `Approx. F` = w$`approx F`,
+  `NumDF` = w$numDF,
+  `DenDF` = w$denDF,
+  `Prob>F` = w$`Pr(> F)`
+  )
+eigenvalue
+```
+This eigenvalue provides all of the statistics we have previously discussed in an easier format to follow. The only different statistic is the canonical correlation, which is the square root of CanRsq. This represents the strength of the association between groups, while canrsq represented the proportion of variance. 
+
+To quickly explain more in depth of the Wilks test statistics, the LR is a measure of how well the canonical function differentiates groups, with a lower value indicating better fit, and allows us to compute the remaining statistics. The approx F shows the approximate F statistic for testing the group differences, NumDf and DenDF show thee numerator and denominator degrees of freedom for the test, and Prob F is the p-value and is the probability that the differences are due to chance, with a low p-value suggesting there are significant differences.
+
+Test Statistics to Confirm Significance and Power of Model:
+```{r}
+tests <- Manova(regGroup)
+summary(tests)
+```
+- This MANOVA, or Multivariate Analysis of Variance, Test was conducted in order to compute the multivariate test statistics that are Pillai's Trace, Wilks' Lambda, Hotelling-Lawley Trace, and Roy's Greatest Root from the eigenvalues of the CDA that we have previously analyzed. First, the Manova function calculated the sums of squares and products for error, which represents the within-group variance for each variable, and the sum of squares and products for hypothesis, which represents the between-group variance. These were calculated in order to find the test statistics provided in the Multivariate Tests: Group section.
+- To start, Pillai's Trace measures the total variance of the predictor variables (Q1-Q6) that can be explained by group differences. A higher value for Pillai's Trace test stat indicates strong group separation. The test statistic is 1.089 with a significant p-value, which indicates that the between-group variance is large relative to the within-group variance.
+- Wilks' Lambda measures the proportion of variance of the dependent variables that can not be explained by group differences. A lower value for Wilks' Lambda test stat indicates stronger group separation. The test statistic is 0.2281 with a significant p-value, which indicates that a significant amount of variance is explained by group differences. This statistic was already found earlier when we observed the first LR test stat.
+- Hotelling-Lawley Trace measures the degree of the difference in group means. A higher value for Hotelling-Lawley Trace test stat indicates more differences between groups. The test statistic is 2.1517 with a significant p-value, which indicates that there are strong differences between groups.
+- Roy's Greatest Root measures the strength of the most discriminating canonical function as it is based on the function with the largest eigenvalue. A higher value for Roy's Greatest Root stat indicates a strong discriminating canonical function. The test statistic is 1.5062 with a significant p-value, which indicates the discriminating abilities of the first canonical function is strong. 
+- Overall, these showed the significance and power of the model. Pillai and Wilks showed that much of the variance was explained by group differences. Hotelling-Lawley showed that the canonical functions capture the group separations, and Roy showed that the first canonical function does provide for strong group separation as well.
+
+Plot of CDA With MANOVA Inflence:
+```{r}
+plot(CDAGroup)
+```
+This plot allows us to visualize the effects of the predictor variables on the canonical models. From this plot, we see that Can1 explains 70% of the variance, and Can2 explains 16.5% of the variance. Most of the predictor variables help distinguish groups in Can1, where we can see all predictors spread significantly on the x scale, with Q3, or access to justice, being the least expansive on that scale. This means they have more influence on Can1 and help place groups like Africa. Can2 is highly influenced by Q3 and allows for separation on the y scale, which we can see is very helpful in distinguishing South America and North America. 
+
+Now that we have shown through MANOVA that there are significant differences between groups and have seen how predictors tend to effect the canonical functions, we will now move on to directly applying the CDA model. This will allow for a more clear view of the groupings of observations. Some of the  variances the model explains will be slightly different, but the effects of variables as explained are still applicable.
+
+Model:
+```{r}
+model <- CDA(simpdata[,-7], as.factor(simpdata[,7]))
+```
+This model has the performed CDA (canonical discriminant analysis) on the simplified data, taking in the dependent variables (Q1-Q6), and using column 7 (Continent) as the grouping variable. The CDA maximizes separation between groups and allows us to see the difference between groups. We will analyze some of its upcoming values and graphs.
+
+Within Matrix:
+```{r}
+model$within
+```
+This is the within-group covariance matrix for the CDA model. The diagonals (so Q1Q1, Q2Q2, etc.) represent the variance of the variables within groups, indicating the spread of the variable within groups. Q1Q1 = 123.85, which shows the variance of Q1 within groups. In other words, this shows that values of Q1 vary around their group mean with an average squared deviation of 123.85, which means that there is much spread in Q1 within groups. The off-diagonal elements, (so Q1Q2, Q1Q4, etc.) represents the covariance between the variables within groups, indicating on average, whether and how they are associated within groups. Q1Q4 = 61.01, which shows that as Q1 increases within groups, Q4 also tends to increase (they have a positive association). This is used in the CDA to control for within-group variability. This generally shows the relationship between variables and is useful for understanding potential underlying patterns in the data. 
+
+Scoring Coefficients:
+```{r}
+CDAGroup$coeffs.raw
+CDAGroup$coeffs.std
+```
+This shows the raw and standardized coefficients in the CDA model, and they are effect of the predictor variables on the canonical functions. The standardized coefficients allow for easier analysis to see the importance of variables. From the output, we can tell that Q4, which is discrimination in the family, has strong influence on the first canonical model, and Q3, which is access to justice, has strong influence in the second canonical model. This goes along with our analysis of the CDA Model with MANOVA influence, where we saw that Q3 was had a strong influence on Can2. The positive and negative values indicate the direction of the contribution of the predictor variable to the canonical score, and the score allows us to group observations.
+
+Group Means:
+```{r}
+model$centers
+```
+This shows the group centers, which are the average values of each predictor variable for each continent. Africa has high positive values for Q1, which is access to productive and financial assets, and Q4, which is discrimination in the family, meaning they help contribute to distinguishing Africa. Europe has high negative values for Q1 and Q4, which also helps distinguish Europe but in an opposite manner.
+
+When looking at both the centers and the coefficients, we can see how one affects the other and how the coefficients for the additional canonical models reveal information that may be harder to see by just analyzing the means. The standardized coefficient on Q4 in Can1 is high, and in the model centers, we see large values for Q4 across the continents. Q3 has low model centers across the continent but has a high standardized coefficient in Can2. This may be due to subtle but consistent differences in groups that CDA is able to account for.
+
+Plot of Model:
+```{r}
+plot(model)
+legend("topleft", inset = c(0.01,0), xpd = TRUE, cex = 0.8, title = "Group", legend = unique(simpdata$Group), col = c("red", "green", "blue", "purple", "cyan"), pch = c(1, 1, 1, 1, 1))
+```
+This is the plot of the CDA and shows how the groups, or continents, are separated by the first two canonical functions. The first canonical function explains 75.28% of the variance, and the second explains 14.3% more of the variance. The open circles are observations and the closed circles are the class centers, which means the mean positions of the continents. We can see that many of the colors are clustered (the goal of the CDA), with blue being around (5,0) and purple being around (0,0). This indicates that many of Asia's points are around 5 on canonical 1 and 0 on canonical 2, and North America's points are around 0 on canonical 1 and 0 on canonical 2, separating Asia and North America on canonical 1. The cyan class center is at Can1 = 0, but at a negative canonical 2 value, indicating that the groupings of Africa and North America were differentiated more on canonical 2. 
+*Note: A legend was added to make the graph easier to read, and overlaps with the previous, not legible legend that the plot originally created.*
+
+Predicted Groupings Based on the CDA:
+```{r}
+predicted <- cbind(1:nrow(simpdata), simpdata[,7], predict(model, simpdata[,-7]))
+colnames(predicted)<-c("Observations number", "Actual label", "Predicted label")
+predicted
+```
+This shows each of the predicted groupings based on the CDA vs the actual groupings. We will make a table to more easily compare them.
+
+Table of Predicted vs Actual:
+```{r}
+tablepva <- table(Predicted = simpdata[,7], Actual = predict(model, simpdata[,-7]))
+tablepva
+```
+Here, we can see the diagonal has most of the values, which means the predicted continent grouping for an observation has the actual grouping. There are some misclassifications, which are the values off the diagonal, which we will look into with the next code.
+
+Number and Percent Misclassified:
+```{r}
+classification <- c(nrow(simpdata), nrow(simpdata)-sum(diag(tablepva)), (1-(sum(diag(tablepva)))/nrow(simpdata))*100)
+names(classification) <- c("Count", "Number Misclassified", "Percent Misclassified")
+classification
+```
+The accuracy is 100 - percent misclassified, which is 100 -  38.09524  = 61.90476.
+
+Table of Original Observations:
+```{r}
+table(simpdata$Group)
+```
+This table should the amount of observations in each Continent from the original data.
+```{r}
+proportions <- prop.table(table(simpdata$Group))
+proportions
+```
+This table shows the proportion of observations in each Continent from the original data.
+
+From this table, we can the chanec accuracy, or the accuracy of randomly guessing labels. For Africa, we have a proportion of 0.4126984 , so the chance accuracy is 41.27% as this is the largest proportion and accuracy when predicting the larger group. As previously found, the classification accuracy is 61.9%. So, in comparison, the classification accuracy is much higher than chance.
+
+{insert analysis}
+I don't remember, but I think there was one more step in comparing accuracies? do you have to multiply chance by something and see if classification accuracy is higher?
+
+
+
